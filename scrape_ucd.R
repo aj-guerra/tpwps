@@ -20,8 +20,8 @@ nodelist <- data.frame(course_code = character(),
                        dept = factor(),
                        stringsAsFactors = FALSE)
 
-edgelist <- data.frame(course = character(),
-                       prerequisites = character())
+edgelist <- data.frame(prerequisites = character(),
+                       course = character())
 
 for (url in urls){
   #load courses from page
@@ -57,8 +57,8 @@ for (url in urls){
       prerequisites_text <- paste(prerequisites_list, collapse = ", ")
       prerequisites_text <- gsub('"', '', prerequisites_text)
       # add prereqs to edgelist
-      edgelist <- rbind(edgelist, data.frame(course = code,
-                                             prerequisites = prerequisites_text))
+      edgelist <- rbind(edgelist, data.frame(prerequisites = prerequisites_text,
+                                             course = code))
     }
   }
 }
@@ -96,10 +96,36 @@ edgelist <- edgelist %>%
 
 coursenet <- graph_from_data_frame(edgelist, vertices = nodelist)
 
-
-ggraph(coursenet, layout = 'drl') +
-  geom_edge_link(color = "gray70", alpha = 0.5) +  # Make edges less prominent to focus on nodes
+ggraph(coursenet, layout = 'kk') +
+  geom_edge_link(color = "black", alpha = 1) +  # Make edges less prominent to focus on nodes
   geom_node_point(aes(color = dept)) +  # Color nodes based on 'dept'
   scale_color_viridis_d() +  # Use a discrete color scale, adjust as needed
   theme_graph() +
   theme(legend.position = "none")
+
+# Computing centrality measures for each vertex
+V(coursenet)$indegree   <- degree(coursenet, mode = "in")
+V(coursenet)$outdegree  <- degree(coursenet, mode = "out")
+V(coursenet)$closeness  <- closeness(coursenet, mode = "total")
+V(coursenet)$betweeness <- betweenness(coursenet, normalized = TRUE)
+
+# Extracting each vectex features as a data.frame
+stats <- as_data_frame(coursenet, what = "vertices")
+
+# Computing quantiles for each variable
+stats_degree <- cbind(
+    indegree   = quantile(stats$indegree, c(.025, .5, .975), na.rm = TRUE),
+    outdegree  = quantile(stats$outdegree, c(.025, .5, .975), na.rm = TRUE),
+    closeness  = quantile(stats$closeness, c(.025, .5, .975), na.rm = TRUE),
+    betweeness = quantile(stats$betweeness, c(.025, .5, .975), na.rm = TRUE)
+  )
+
+stats_degree
+
+stats %>% 
+  group_by(dept) %>% 
+  summarise(mean_out = median(outdegree),
+            mean_in = median(indegree),
+            mean_between = median(betweeness),
+            mean_close = median(closeness)) %>% 
+  arrange(desc(mean_in))
