@@ -69,9 +69,6 @@ edgelist <- tibble(edgelist)
 saveRDS(nodelist, file = 'nodelist.rds')
 saveRDS(edgelist, file = 'edgelist.rds')
 
-# nodelist <- readRDS('nodelist.rds')
-# edgelist <- readRDS('edgelist.rds')
-
 edgelist <- edgelist %>%
   drop_na() %>% 
   mutate(prerequisites = gsub('[“”"]', '', prerequisites), # Remove potential quotation marks
@@ -96,36 +93,7 @@ edgelist <- edgelist %>%
 
 coursenet <- graph_from_data_frame(edgelist, vertices = nodelist)
 
-ggraph(coursenet, layout = 'kk') +
-  geom_edge_link(color = "black", alpha = 1) +  # Make edges less prominent to focus on nodes
-  geom_node_point(aes(color = dept)) +  # Color nodes based on 'dept'
-  scale_color_viridis_d() +  # Use a discrete color scale, adjust as needed
-  theme_graph() +
-  theme(legend.position = "none")
+saveRDS(coursenet, file = 'coursenet.rds')
 
-# Computing centrality measures for each vertex
-V(coursenet)$indegree   <- degree(coursenet, mode = "in")
-V(coursenet)$outdegree  <- degree(coursenet, mode = "out")
-V(coursenet)$closeness  <- closeness(coursenet, mode = "total")
-V(coursenet)$betweeness <- betweenness(coursenet, normalized = TRUE)
 
-# Extracting each vectex features as a data.frame
-stats <- as_data_frame(coursenet, what = "vertices")
 
-# Computing quantiles for each variable
-stats_degree <- cbind(
-    indegree   = quantile(stats$indegree, c(.025, .5, .975), na.rm = TRUE),
-    outdegree  = quantile(stats$outdegree, c(.025, .5, .975), na.rm = TRUE),
-    closeness  = quantile(stats$closeness, c(.025, .5, .975), na.rm = TRUE),
-    betweeness = quantile(stats$betweeness, c(.025, .5, .975), na.rm = TRUE)
-  )
-
-stats_degree
-
-stats %>% 
-  group_by(dept) %>% 
-  summarise(mean_out = median(outdegree),
-            mean_in = median(indegree),
-            mean_between = median(betweeness),
-            mean_close = median(closeness)) %>% 
-  arrange(desc(mean_in))
