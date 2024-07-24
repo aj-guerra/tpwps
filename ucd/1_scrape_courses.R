@@ -66,9 +66,6 @@ for (url in urls){
 nodelist <- tibble(nodelist)
 edgelist <- tibble(edgelist)
 
-saveRDS(nodelist, file = 'nodelist.rds')
-saveRDS(edgelist, file = 'edgelist.rds')
-
 edgelist <- edgelist %>%
   drop_na() %>% 
   mutate(prerequisites = gsub('[“”"]', '', prerequisites), # Remove potential quotation marks
@@ -93,7 +90,7 @@ edgelist <- edgelist %>%
 
 coursenet <- graph_from_data_frame(edgelist, vertices = nodelist)
 
-saveRDS(coursenet, file = 'coursenet.rds')
+saveRDS(coursenet, file = 'ucd/coursenet.rds')
 
 
 

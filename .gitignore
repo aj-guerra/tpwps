@@ -1,10 +1,12 @@
-/ucdavis_pdfs/*
-/ucdavis_courses/*
-/ucdavis_subgraphs/*
+**/major_pdfs/
+**/major_courses/
+**/subgraphs/
 /graphs/*
 
 # R project files
 *.Rproj
+
+.DS_Store
 
 # History files
 .Rhistory

@@ -38,7 +38,7 @@ subgraph_stats <- data.frame(major = character(),
                              m = integer())
 
 # Main function to automate the process for each RDS file in the input folder
-subgraph_creation <- function(rds_folder, coursenet, output_folder) {
+subgraph_creation <- function(rds_folder, coursenet) {
    rds_files <- list.files(rds_folder, pattern = "\\.rds$", full.names = TRUE)
    
    for (rds_path in rds_files) {
@@ -53,7 +53,7 @@ subgraph_creation <- function(rds_folder, coursenet, output_folder) {
       saveRDS(subgraph, output_sg_path)
       
       # Create and save the subgraph plot
-      # create_subgraph_plot(subgraph, major_name, image_out, graph_out)
+      create_subgraph_plot(subgraph, major_name, image_out, graph_out)
       
       # Add to the list of subgraphs
       sub_stats <- data.frame(major = major_name,
@@ -68,7 +68,6 @@ subgraph_creation <- function(rds_folder, coursenet, output_folder) {
                               net_degree = as.numeric(migraph::network_degree(subgraph)),
                               net_betweenness = as.numeric(migraph::network_betweenness(subgraph)),
                               net_eigenvector = as.numeric(migraph::network_eigenvector(subgraph)),
-                              # net_core = migraph::network_core(subgraph),
                               net_reciprocity = as.numeric(migraph::network_reciprocity(subgraph)),
                               net_transitivity = as.numeric(migraph::network_transitivity(subgraph)),
                               net_assortativity = as.numeric(migraph::network_assortativity(subgraph))
@@ -80,12 +79,12 @@ subgraph_creation <- function(rds_folder, coursenet, output_folder) {
 }
 
 # Example usage
-rds_folder <- "ucdavis_courses"
-graph_out <- "ucdavis_subgraphs/graphs"
-image_out <- "ucdavis_subgraphs/images"
-stats_out <- "ucdavis_subgraphs/all_major_stats.rds"
+rds_folder <- "ucd/major_courses"
+graph_out <- "ucd/subgraphs/graphs"
+image_out <- "ucd/subgraphs/images"
+stats_out <- "ucd/subgraphs/all_major_stats.rds"
 
-coursenet <- readRDS('coursenet.rds')
+coursenet <- readRDS('ucd/coursenet.rds')
 
 # Generate the sequences for UWP102A through UWP102L and UWP104A through UWP104J
 uwp102 <- c('UWP101', 'UWP101V', 'UWP101Y', paste0('UWP102', LETTERS[1:12]))
@@ -97,12 +96,4 @@ en_req <- c(uwp102, uwp104)
 coursenet <- delete_vertices(coursenet, V(coursenet)[name %in% en_req])
 
 subgraph_creation(rds_folder, coursenet)
-
-# Load the saved subgraph statistics
-subgraph_stats <- tibble(readRDS(stats_out))
-subgraph_stats %>% arrange(desc(avg_degree)) 
-
-corr_subgraph <- subgraph_stats %>% select(-major)
-
-ggcorrplot(cor(corr_subgraph), lab = TRUE, method = "square", type = "lower", tl.cex = 0.7)
 

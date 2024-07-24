@@ -1,6 +1,7 @@
 library(rvest)
 library(httr)
 library(purrr)
+library(pdftools)
 
 # Define the main URL
 main_url <- "https://catalog.ucdavis.edu/departments-programs-degrees"
@@ -51,3 +52,24 @@ for (link in all_pdf_links) {
    writeBin(content(pdf_content, "raw"), file.path("ucdavis_pdfs", pdf_name))
    }, silent = FALSE)
 }
+
+input_folder <- "ucd/major_pdfs"
+output_folder <- "ucd/major_courses"
+
+pdf_files <- list.files(input_folder, pattern = "\\.pdf$", full.names = TRUE)
+for (pdf_path in pdf_files) {
+   text <- paste(pdf_text(pdf_path), collapse = " ")
+   
+   major_name <- tools::file_path_sans_ext(basename(pdf_path))
+   
+   pattern <- "\\b[A-Z]{3}\\s[0-9]{3}[A-Z]?\\b"
+   courses <- gsub(" ", "", str_extract_all(text, pattern)[[1]])
+   
+   cat(major_name, "\n\n")
+   cat(courses, '\n\n')
+   
+   output_rds_path <- file.path(output_folder, 
+                                paste0(tools::file_path_sans_ext(basename(pdf_path)), ".rds"))
+   saveRDS(courses, output_rds_path)
+}
+
