@@ -4,6 +4,7 @@ library(ggraph)
 library(viridis)
 library(readr)
 library(migraph)
+library(tidyverse)
 
 # Function to calculate network statistics and plot the subgraph
 create_subgraph_plot <- function(subgraph, major_name, image_out, graph_out) {
@@ -31,11 +32,7 @@ create_subgraph_plot <- function(subgraph, major_name, image_out, graph_out) {
    
 }
 
-subgraph_stats <- data.frame(major = character(),
-                             avg_degree = numeric(),
-                             graph_density = numeric(),
-                             n = integer(),
-                             m = integer())
+subgraph_stats <- data.frame()
 
 # Main function to automate the process for each RDS file in the input folder
 subgraph_creation <- function(rds_folder, coursenet) {
@@ -46,14 +43,24 @@ subgraph_creation <- function(rds_folder, coursenet) {
       
       # Extract the major name from the file name
       major_name <- tools::file_path_sans_ext(basename(rds_path))
+      major_name2 <- gsub('-bs$', '', major_name)
+      major_name2 <- gsub('-ab$', '', major_name2)
       
       # Create and save the subgraph
       subgraph <- induced_subgraph(coursenet, vids = V(coursenet)[name %in% courses])
+      
+      subgraph <- set_vertex_attr(subgraph, 
+                                  "main_connected", 
+                                  value  = components(subgraph)$membership == which.max(components(subgraph)$csize))
+      
       output_sg_path <- file.path(graph_out, paste0(major_name, ".rds"))
       saveRDS(subgraph, output_sg_path)
       
       # Create and save the subgraph plot
-      create_subgraph_plot(subgraph, major_name, image_out, graph_out)
+      create_subgraph_plot(subgraph, 
+                           major_name, 
+                           image_out, 
+                           graph_out)
       
       # Add to the list of subgraphs
       sub_stats <- data.frame(major = major_name,
@@ -62,38 +69,28 @@ subgraph_creation <- function(rds_folder, coursenet) {
                               n = vcount(subgraph),
                               m = ecount(subgraph),
                               net_diameter = as.numeric(migraph::network_diameter(subgraph)),
-                              net_components = as.numeric(migraph::network_components(subgraph)),
-                              net_cohesion = as.numeric(migraph::network_cohesion(subgraph)),
-                              net_adhesion = as.numeric(migraph::network_adhesion(subgraph)),
-                              net_degree = as.numeric(migraph::network_degree(subgraph)),
-                              net_betweenness = as.numeric(migraph::network_betweenness(subgraph)),
-                              net_eigenvector = as.numeric(migraph::network_eigenvector(subgraph)),
-                              net_reciprocity = as.numeric(migraph::network_reciprocity(subgraph)),
-                              net_transitivity = as.numeric(migraph::network_transitivity(subgraph)),
-                              net_assortativity = as.numeric(migraph::network_assortativity(subgraph))
-                              )
+                              net_assortativity = as.numeric(migraph::network_assortativity(subgraph)),
+                              net_length = as.numeric(migraph::network_length(subgraph)),
+                              per_connected = as.numeric(mean(V(subgraph)$main_connected,
+                                                              na.rm = TRUE)),
+                              degree_type = as.factor(case_when(str_detect(major_name, '-bs$') ~ 'bs',
+                                                                str_detect(major_name, '-ba$') ~ 'ba',
+                                                                TRUE ~ 'other'))
+      )
+      
       subgraph_stats <- rbind(subgraph_stats, sub_stats)
-      output_stats_path <- file.path(stats_out)
-      saveRDS(subgraph_stats, output_stats_path)
    }
+   output_stats_path <- file.path(stats_out)
+   saveRDS(subgraph_stats, output_stats_path)
 }
 
 # Example usage
-rds_folder <- "ucd/major_courses"
-graph_out <- "ucd/subgraphs/graphs"
-image_out <- "ucd/subgraphs/images"
-stats_out <- "ucd/subgraphs/all_major_stats.rds"
+rds_folder <- "ucsc/major_courses"
+graph_out <- "ucsc/subgraphs/graphs"
+image_out <- "ucsc/subgraphs/images"
+stats_out <- "ucsc/subgraphs/all_major_stats.rds"
 
-coursenet <- readRDS('ucd/coursenet.rds')
-
-# Generate the sequences for UWP102A through UWP102L and UWP104A through UWP104J
-uwp102 <- c('UWP101', 'UWP101V', 'UWP101Y', paste0('UWP102', LETTERS[1:12]))
-uwp104 <- c(paste0('UWP104', LETTERS[1:10]), 'UWP104AV', 'UWP104AY', 'UWP104FV', 'UWP104FY', 'UWP104T')
-
-# Combine with the existing list
-en_req <- c(uwp102, uwp104)
-
-coursenet <- delete_vertices(coursenet, V(coursenet)[name %in% en_req])
+coursenet <- readRDS('ucsc/coursenet.rds')
 
 subgraph_creation(rds_folder, coursenet)
 
