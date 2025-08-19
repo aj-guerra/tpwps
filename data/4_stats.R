@@ -55,9 +55,7 @@ summary(lm(.fittedPC2 ~ .fittedPC1, data=caes))
 no_cls <- graph_pca %>% 
    filter(college!='CLS')
 
-graph_pca %>% 
-   group_by(college) %>% 
-   summarize(pc1m=mean(.fittedPC1), pc1sd = sd(.fittedPC1))
+summary(lm(.fittedPC2 ~ .fittedPC1, data=no_cls))
 
 # plot the clusters
 # graph_pca %>% 
@@ -88,6 +86,11 @@ ggplot(data=caes, aes(.fittedPC1, .fittedPC2, color=college))+
 ggplot(data=ce_cbs, aes(.fittedPC1, .fittedPC2, color=college))+
    geom_point(data=graph_pca, aes(.fittedPC1, .fittedPC2, color=college), size = 0.1)+
    # geom_point(data=centroids, aes(meanx, meany), color='black', size=5)+
+   geom_text(aes(label=major),
+             size=2.5)
+
+
+ggplot(data=graph_pca, aes(.fittedPC1, .fittedPC2, color=degree_type))+
    geom_text(aes(label=major),
              size=2.5)
 

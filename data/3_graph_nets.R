@@ -112,22 +112,22 @@ stats_out <- "data/subgraphs/all_major_stats.rds"
 
 coursenet <- readRDS('data/coursenet.rds')
 major_metadata <- readRDS('data/major_metadata.rds')
-
-# Generate the sequences for UWP102A through UWP102L and UWP104A through UWP104J
-lower_div <- c('UWP001', 'UWP001Y', 'UWP001V', 
-               'UWP048', 'UWP049', 'COM001', 
-               'COM002', 'COM003', 'COM004', 
-               'NAS005', 
-               'ENL003', 'ENL003V')
-uwp101 <- 'UWP101'
-uwp102 <- c('UWP101', 'UWP101V', 'UWP101Y', paste0('UWP102', LETTERS[1:12]))
-uwp104 <- c(paste0('UWP104', LETTERS[1:10]), 'UWP104AV', 'UWP104AY', 
-            'UWP104FV', 'UWP104FY', 'UWP104T')
 # 
-# # Combine with the existing list
-en_req <- c(lower_div, uwp101, uwp102, uwp104)
-# 
-# coursenet <- delete_vertices(coursenet, V(coursenet)[name %in% en_req])
+# # Generate the sequences for UWP102A through UWP102L and UWP104A through UWP104J
+# lower_div <- c('UWP001', 'UWP001Y', 'UWP001V', 
+#                'UWP048', 'UWP049', 'COM001', 
+#                'COM002', 'COM003', 'COM004', 
+#                'NAS005', 
+#                'ENL003', 'ENL003V')
+# uwp101 <- 'UWP101'
+# uwp102 <- c('UWP101', 'UWP101V', 'UWP101Y', paste0('UWP102', LETTERS[1:12]))
+# uwp104 <- c(paste0('UWP104', LETTERS[1:10]), 'UWP104AV', 'UWP104AY', 
+#             'UWP104FV', 'UWP104FY', 'UWP104T')
+# # 
+# # # Combine with the existing list
+# en_req <- c(lower_div, uwp101, uwp102, uwp104)
+# # 
+# # coursenet <- delete_vertices(coursenet, V(coursenet)[name %in% en_req])
 
 subgraph_creation(rds_folder, coursenet)
 
